@@ -1,6 +1,7 @@
 import sqlite3
 import os
 
+import utils
 
 class DB:
     """
@@ -11,7 +12,12 @@ class DB:
     def __init__(self, db_name: str):
         self._name = db_name
         self._path = os.path.abspath(self._name)
-        self.conn = sqlite3.connect(self._path)
+        self._conn = sqlite3.connect(self._path)
+
+    @property
+    def has_df_table(self):
+        """True si la table des DF existe dans la base de données"""
+        return 'FuncDep' in self.tables
 
     @property
     def name(self) -> str:
@@ -19,33 +25,128 @@ class DB:
 
     @property
     def tables(self) -> list:
-        c = self.conn.cursor()
+        c = self._conn.cursor()
         c.execute('SELECT name FROM sqlite_master WHERE type="table";')
         return [t[0] for t in c.fetchall()]
 
     def get_fields(self, table: str) -> list:
-        c = self.conn.cursor()
-        c.execute('PRAGMA table_info(' + table + ')')
+
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknowTableError()
+
+        # La table n'est pas celle des DF
+        if table == 'FuncDep':
+            raise DFTableError()
+
+        c = self._conn.cursor()
+        c.execute('PRAGMA table_info(' + table + ')')  # TODO: use prepare request 
         return [t[1] for t in c.fetchall()]
 
     def add_df(self, table: str, lhs: str, rhs:str):
-        pass
+
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknowTableError()
+
+        # La table n'est pas celle des DF
+        if table == 'FuncDep':
+            raise DFTableError()
+
+        table_fields = self.get_fields(table)
+
+        # Tous les champs de la prémise existent dans la table
+        for field in lhs.split():
+            if field not in table_fields:
+                raise UnknowFieldsError()
+
+        # La doit être singulière
+        if len(rhs.split()) > 1:
+            raise DFNotSingularError()
+
+        # Le champ de déffini doit exister dans la table
+        if rhs not in self.get_fields(table):
+            raise UnknowFieldsError()
+
+        c = self._conn.cursor()
+
+        # On crée la tables des DF si besoin
+        if not self.has_df_table:
+            utils.execute_sql_file(c, os.path.join('misc', 'init_df_table.sql'))
+
+        c.execute('INSERT INTO `FuncDep` VALUES (?, ?, ?)', (table, lhs, rhs))
 
     def del_df(self, table: str, lhs: str, rhs: str):
-        pass
+        df =  (table, lhs, rhs)
+
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknowTableError()
+
+        # La DF doit exister
+        if df not in self.list_df():
+            raise DFNotFoundError()
+
+        c = self._conn.cursor()
+
+        c.execute('DELETE FROM `FuncDep` WHERE `table` = ? AND `lhs` = ? AND `rhs` = ?', df)
 
     def list_df(self) -> list:
-        pass
+        c = self._conn.cursor()
+
+        # La table doit exister
+        if not self.has_df_table:
+            return []
+        
+        c.execute('SELECT * FROM `FuncDep`')
+        return c.fetchall()
 
     def list_table_df(self, table: str) -> list:
-        pass
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknowTableError()
+
+        c = self._conn.cursor()
+
+        if not self.has_df_table:
+            return []
+        
+        c.execute('SELECT * FROM `FuncDep` WHERE `table` = ?', (table,))
+        return c.fetchall()
 
     def check_df(self) -> dict:
+        """Vérifie si les DF sont respectées"""
         pass
 
     def check_table_df(self, table: str) -> list:
-        pass
+        """Vérifie si les DF sont respectées"""
+
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknowTableError()
+
+        # TODO
 
     def close(self):
-        self.conn.commit()
-        self.conn.close()
+        self._conn.commit()
+        self._conn.close()
+
+
+class UnknowTableError(Exception):
+    pass
+
+
+class UnknowFieldsError(Exception):
+    pass
+
+
+class DFNotFoundError(Exception):
+    pass
+
+
+class DFNotSingularError(Exception):
+    pass
+
+
+class DFTableError(Exception):
+    pass

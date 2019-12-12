@@ -42,27 +42,65 @@ class FuncDepTest(unittest.TestCase):
         for t in tables:
             self.assertIn(t, self.db.tables)
 
-        for t in self.db.tables:
-            self.assertIn(t, tables)
-
     def test_get_fields(self):
         fields = ['Number_Plate', 'Chassis', 'Make', 'Mileage']
 
         for f in fields:
             self.assertIn(f, self.db.get_fields('BUSES'))
 
-        for f in self.db.get_fields('BUSES'):
-            self.assertIn(f, fields)
-
     def test_table_df(self):
-        self.assertNotIn('Funcdep', self.db.tables)
         self.db.add_df('BUSES', 'Chassis', 'Mileage')
-        self.assertIn('Funcdep', self.db.tables)
+        self.assertIn('FuncDep', self.db.tables)
 
     def test_add_df(self):
         self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
         self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_df())
         self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_table_df('TRIPS'))
+
+    def test_unknow_table(self):
+        with self.assertRaises(funcdep.UnknowTableError):
+            self.db.add_df('RANDOM', 'Chassis', 'Mileage')
+
+        with self.assertRaises(funcdep.UnknowTableError):
+            self.db.get_fields('RONDOM')
+
+        with self.assertRaises(funcdep.UnknowTableError):
+            self.db.check_table_df('RANDOM')
+
+        with self.assertRaises(funcdep.UnknowTableError):
+            self.db.del_df('RANDOM', 'Chassis', 'Mileage')
+
+        with self.assertRaises(funcdep.UnknowTableError):
+            self.db.list_table_df('RANDOM')
+
+    def test_unknow_fields(self):
+        with self.assertRaises(funcdep.UnknowFieldsError):
+            self.db.add_df('BUSES', 'Chassis', 'Random')
+
+        with self.assertRaises(funcdep.UnknowFieldsError):
+            self.db.add_df('BUSES', 'Random', 'Mileage')
+
+        with self.assertRaises(funcdep.UnknowFieldsError):
+            self.db.add_df('BUSES', 'Chassis Random', 'Mileage')
+
+    def test_df_not_found(self):
+        with self.assertRaises(funcdep.DFNotFoundError):
+            self.db.del_df('BUSES', 'Make', 'Mileage')
+
+    def test_df_not_singular(self):
+        with self.assertRaises(funcdep.DFNotSingularError):
+            self.db.add_df('BUSES', 'Chassis', 'Mileage Make')
+
+    def test_df_table_not_accepted(self):
+        with self.assertRaises(funcdep.DFTableError):
+            self.db.add_df('FuncDep', 'Chassis', 'Mileage')
+
+        with self.assertRaises(funcdep.DFTableError):
+            self.db.get_fields('FuncDep')
+
+    # TODO: check dans les df conclusion non inclue dans la prémisse
+
+    # TODO: test ckeck df
 
 
 if __name__ == '__main__':
