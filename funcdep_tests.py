@@ -8,7 +8,7 @@ import utils
 TEST_DB = os.path.join(os.getcwd(), 'test.sqlite')
 
 
-class MyTestCase(unittest.TestCase):
+class FuncDepTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
@@ -37,10 +37,32 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual('test.sqlite', self.db.name)
 
     def test_get_tables(self):
-        self.assertEqual(['TRIPS', 'BUSES', 'DESTINATIONS'], self.db.tables)
+        tables = ['TRIPS', 'BUSES', 'DESTINATIONS']
 
-    def test_get_flieds(self):
-        self.assertEqual(['Number_Plate', 'Chassis', 'Make', 'Mileage'], self.db.get_fields('BUSES'))
+        for t in tables:
+            self.assertIn(t, self.db.tables)
+
+        for t in self.db.tables:
+            self.assertIn(t, tables)
+
+    def test_get_fields(self):
+        fields = ['Number_Plate', 'Chassis', 'Make', 'Mileage']
+
+        for f in fields:
+            self.assertIn(f, self.db.get_fields('BUSES'))
+
+        for f in self.db.get_fields('BUSES'):
+            self.assertIn(f, fields)
+
+    def test_table_df(self):
+        self.assertNotIn('Funcdep', self.db.tables)
+        self.db.add_df('BUSES', 'Chassis', 'Mileage')
+        self.assertIn('Funcdep', self.db.tables)
+
+    def test_add_df(self):
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_df())
+        self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_table_df('TRIPS'))
 
 
 if __name__ == '__main__':

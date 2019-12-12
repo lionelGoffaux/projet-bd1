@@ -1,4 +1,3 @@
-import utils
 import sqlite3
 import os
 
@@ -29,5 +28,24 @@ class DB:
         c.execute('PRAGMA table_info(' + table + ')')
         return [t[1] for t in c.fetchall()]
 
+    def add_df(self, table: str, lhs: str, rhs:str):
+        pass
+
+    def del_df(self, table: str, lhs: str, rhs: str):
+        pass
+
+    def list_df(self) -> list:
+        pass
+
+    def list_table_df(self, table: str) -> list:
+        pass
+
+    def check_df(self) -> dict:
+        pass
+
+    def check_table_df(self, table: str) -> list:
+        pass
+
     def close(self):
+        self.conn.commit()
         self.conn.close()
