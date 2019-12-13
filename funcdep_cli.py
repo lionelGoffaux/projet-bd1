@@ -68,13 +68,13 @@ type help or ? to get help
         fields = None
         try:
             fields = self.db.get_fields(args.table)
-        except (funcdep.UnknowTableError, funcdep.DFTableError):
+        except (funcdep.UnknownTableError, funcdep.DFTableError):
             print('ERROR: Tables not exists')
             return
 
         utils.print_list(fields)
 
-    def do_DFlist(self, args):
+    def do_list(self, args):
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -89,13 +89,13 @@ type help or ? to get help
         dfs = None
         try:
             dfs = self.db.list_table_df(args.table) if args.table else self.db.list_df()
-        except funcdep.UnknowTableError:
+        except funcdep.UnknownTableError:
             print('ERROR: Tables not exists')
             return
 
         utils.print_list(dfs)
 
-    def do_DFadd(self, args):
+    def do_add(self, args):
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -113,9 +113,9 @@ type help or ? to get help
 
         try:
             self.db.add_df(args.table, lhs, args.rhs)
-        except funcdep.UnknowTableError:
+        except funcdep.UnknownTableError:
             print('ERROR: Unknow table')
-        except funcdep.UnknowFieldsError:
+        except funcdep.UnknownFieldsError:
             print('ERROR: Unknow fields')
         except funcdep.DFNotSingularError:
             print('ERROR: DF not singular')
@@ -124,7 +124,7 @@ type help or ? to get help
         except funcdep.DFAddTwiceError:
             print('ERROR: DF already added')
 
-    def do_DFdel(self, args):
+    def do_del(self, args):
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -142,12 +142,12 @@ type help or ? to get help
 
         try:
             self.db.del_df(args.table, lhs, args.rhs)
-        except funcdep.UnknowTableError:
+        except funcdep.UnknownTableError:
             print('ERROR: Unknow table')
         except funcdep.DFNotFoundError:
             print('ERROR: DF not found')
 
-    def do_DFckeck(self, args):
+    def do_ckeck(self, args):
         pass 
 
     def do_exit(self, args):

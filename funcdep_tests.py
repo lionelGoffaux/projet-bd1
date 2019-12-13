@@ -65,31 +65,30 @@ class FuncDepTest(unittest.TestCase):
         with self.assertRaises(funcdep.DFAddTwiceError):
             self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
 
-
-    def test_unknow_table(self):
-        with self.assertRaises(funcdep.UnknowTableError):
+    def test_unknown_table(self):
+        with self.assertRaises(funcdep.UnknownTableError):
             self.db.add_df('RANDOM', 'Chassis', 'Mileage')
 
-        with self.assertRaises(funcdep.UnknowTableError):
-            self.db.get_fields('RONDOM')
+        with self.assertRaises(funcdep.UnknownTableError):
+            self.db.get_fields('RANDOM')
 
-        with self.assertRaises(funcdep.UnknowTableError):
+        with self.assertRaises(funcdep.UnknownTableError):
             self.db.check_table_df('RANDOM')
 
-        with self.assertRaises(funcdep.UnknowTableError):
+        with self.assertRaises(funcdep.UnknownTableError):
             self.db.del_df('RANDOM', 'Chassis', 'Mileage')
 
-        with self.assertRaises(funcdep.UnknowTableError):
+        with self.assertRaises(funcdep.UnknownTableError):
             self.db.list_table_df('RANDOM')
 
-    def test_unknow_fields(self):
-        with self.assertRaises(funcdep.UnknowFieldsError):
+    def test_unknown_fields(self):
+        with self.assertRaises(funcdep.UnknownFieldsError):
             self.db.add_df('BUSES', 'Chassis', 'Random')
 
-        with self.assertRaises(funcdep.UnknowFieldsError):
+        with self.assertRaises(funcdep.UnknownFieldsError):
             self.db.add_df('BUSES', 'Random', 'Mileage')
 
-        with self.assertRaises(funcdep.UnknowFieldsError):
+        with self.assertRaises(funcdep.UnknownFieldsError):
             self.db.add_df('BUSES', 'Chassis Random', 'Mileage')
 
     def test_df_not_found(self):
@@ -122,7 +121,7 @@ class FuncDepTest(unittest.TestCase):
         self.db.add_df('BUSES', 'Chassis', 'Make')
 
         res = {('TRIPS', 'Date Driver Departure_Time', 'Destination'): [],
-                ('BUSES', 'Chassis', 'Make'): [("DDT 123",    "XGUR6775",   "Renault",    212342),
+               ('BUSES', 'Chassis', 'Make'): [("DDT 123",    "XGUR6775",   "Renault",    212342),
                                                ("DDT 456",    "XGUR6775",   "Mercedes",   212350)]}
 
         res_trips = {('TRIPS', 'Date Driver Departure_Time', 'Destination'): []}

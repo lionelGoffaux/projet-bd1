@@ -1,8 +1,9 @@
-import sqlite3
-import os
 import functools
+import os
+import sqlite3
 
 import utils
+
 
 class DB:
     """
@@ -34,7 +35,7 @@ class DB:
 
         # La table doit exister
         if table not in self.tables:
-            raise UnknowTableError()
+            raise UnknownTableError()
 
         # La table n'est pas celle des DF
         if table == 'FuncDep':
@@ -44,11 +45,11 @@ class DB:
         c.execute('PRAGMA table_info(' + table + ')')  # TODO: use prepare request 
         return [t[1] for t in c.fetchall()]
 
-    def add_df(self, table: str, lhs: str, rhs:str):
+    def add_df(self, table: str, lhs: str, rhs: str):
 
         # La table doit exister
         if table not in self.tables:
-            raise UnknowTableError()
+            raise UnknownTableError()
 
         # La table n'est pas celle des DF
         if table == 'FuncDep':
@@ -56,10 +57,10 @@ class DB:
 
         table_fields = self.get_fields(table)
 
-        # Tous les champs de la prémise existent dans la table
+        # Tous les champs de la prémisse existent dans la table
         for field in lhs.split():
             if field not in table_fields:
-                raise UnknowFieldsError()
+                raise UnknownFieldsError()
 
         # La doit être singulière
         if len(rhs.split()) > 1:
@@ -67,7 +68,7 @@ class DB:
 
         # Le champ de déffini doit exister dans la table
         if rhs not in self.get_fields(table):
-            raise UnknowFieldsError()
+            raise UnknownFieldsError()
 
         # Le champ rhs ne doit pas être dans les champs lhs
         if rhs in lhs.split():
@@ -89,7 +90,7 @@ class DB:
 
         # La table doit exister
         if table not in self.tables:
-            raise UnknowTableError()
+            raise UnknownTableError()
 
         # La DF doit exister
         if df not in self.list_df():
@@ -112,7 +113,7 @@ class DB:
     def list_table_df(self, table: str) -> list:
         # La table doit exister
         if table not in self.tables:
-            raise UnknowTableError()
+            raise UnknownTableError()
 
         c = self._conn.cursor()
 
@@ -140,7 +141,8 @@ class DB:
                 c.execute('SELECT DISTINCT {} FROM {} WHERE {};'.format(df[2], df[0], conditions))
                 assos = c.fetchall()
 
-                res[df] = [ t  for t in c.execute('SELECT DISTINCT * FROM {} WHERE {};'.format(df[0], conditions)) ] if len(assos) > 1 else []
+                res[df] = [t for t in c.execute('SELECT DISTINCT * FROM {} WHERE {};'.format(df[0], conditions))] \
+                    if len(assos) > 1 else []
 
         return res
 
@@ -153,7 +155,7 @@ class DB:
 
         # La table doit exister
         if table not in self.tables:
-            raise UnknowTableError()
+            raise UnknownTableError()
 
         return self._check_df_set(self.list_table_df(table))
 
@@ -162,11 +164,11 @@ class DB:
         self._conn.close()
 
 
-class UnknowTableError(Exception):
+class UnknownTableError(Exception):
     pass
 
 
-class UnknowFieldsError(Exception):
+class UnknownFieldsError(Exception):
     pass
 
 
@@ -184,6 +186,7 @@ class DFAddTwiceError(Exception):
 
 class DFTableError(Exception):
     pass
+
 
 class RHSIncludeToLHSError(Exception):
     pass
