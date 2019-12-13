@@ -116,7 +116,24 @@ class FuncDepTest(unittest.TestCase):
 
         self.assertEqual(0, len(self.db.list_df()))
 
-    # TODO: test ckeck df
+    def test_check_df(self):
+        self.db.purge_df()
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        self.db.add_df('BUSES', 'Chassis', 'Make')
+
+        res = {('TRIPS', 'Date Driver Departure_Time', 'Destination'): [],
+                ('BUSES', 'Chassis', 'Make'): [("DDT 123",    "XGUR6775",   "Renault",    212342),
+                                               ("DDT 456",    "XGUR6775",   "Mercedes",   212350)]}
+
+        res_trips = {('TRIPS', 'Date Driver Departure_Time', 'Destination'): []}
+
+        res_buses = {('BUSES', 'Chassis', 'Make'): [("DDT 123",    "XGUR6775",   "Renault",    212342),
+                                                    ("DDT 456",    "XGUR6775",   "Mercedes",   212350)]}
+
+        self.assertEqual(res, self.db.check_df())
+        self.assertEqual(res_trips, self.db.check_table_df('TRIPS'))
+        self.assertEqual(res_buses, self.db.check_table_df('BUSES'))
+
 
 if __name__ == '__main__':
     unittest.main()

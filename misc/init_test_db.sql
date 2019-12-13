@@ -1,13 +1,11 @@
 CREATE TABLE IF NOT EXISTS `TRIPS`(
-    `Date` DATE NOT NULL,
+    `Date` VARCHAR NOT NULL,
     `Number_Plate` VARCHAR(7) NOT NULL,
     `Driver` VARCHAR NOT NULL,
     `Destination` VARCHAR NOT NULL,
     `Departure_Time` DATETIME NOT NULL,
 
-    CONSTRAINT `TRIPS_pk` PRIMARY KEY (`Date`, `Driver`, `Departure_Time`),
-    CONSTRAINT `Number_Plate_fk` FOREIGN KEY (`Number_Plate`) REFERENCES BUSES(`Number_Plate`),
-    CONSTRAINT `Destination_fk` FOREIGN KEY (`Destination`) REFERENCES DESTINATIONS(`Name`)
+    CONSTRAINT `TRIPS_pk` PRIMARY KEY (`Date`, `Driver`, `Departure_Time`)
 );
 
 CREATE TABLE IF NOT EXISTS `BUSES`(
@@ -24,3 +22,17 @@ CREATE TABLE IF NOT EXISTS `DESTINATIONS`(
 
     CONSTRAINT `DESTINATIONS_pk` PRIMARY KEY (`Name`)
 );
+
+INSERT INTO `TRIPS` VALUES  
+    ("15/10/2001",   "DDT 123",    "John",   "Antwerp Zoo",        "09.00"),
+    ("15/10/2001",   "LPG 234",    "Tim",    "Ostende Beach",      "08.00"),
+    ("16/10/2001",   "DDT 123",    "Tim",    "Dinant Citadel",     "10.00"),
+    ("17/10/2001",   "LPG 234",    "John",   "Antwerp Zoo",        "08.15"),
+    ("17/10/2001",   "DDT 123",    "Tim",    "Antwerp Zoo",        "08.15"),
+    ("18/10/2001",   "DDT 123",    "Tim",    "Brussels Atomium",   "09.20");
+
+INSERT INTO `BUSES` VALUES
+    ("DDT 123",    "XGUR6775",   "Renault",    212342),
+    ("DDT 456",    "XGUR6775",   "Mercedes",    212350),
+    ("LPG 234",    "ZXRY9823",   "Mercedes",   321734),
+    ("RAM 221",    "XXZZ7345",   "Renault",     10000);

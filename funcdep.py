@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import functools
 
 import utils
 
@@ -125,18 +126,35 @@ class DB:
         c = self._conn.cursor()
         c.execute('DELETE FROM `FuncDep`')
 
+    def _check_df_set(self, dfs: list) -> dict:
+        c = self._conn.cursor()
+        res = {}
+
+        for df in dfs:
+            unique_lhs = c.execute('SELECT DISTINCT ' + df[1].replace(' ', ', ') + ' FROM ' + df[0] + ';') 
+            for lhs in unique_lhs:
+                coditions = functools.reduce(lambda a, b : a + ' AND ' + b, ['{}={} '.format(f, v.__repr__()) for f, v in zip(df[1].split(), lhs)])
+                c.execute('SELECT DISTINCT ' + df[2] + ' FROM ' + df[0] + ' WHERE ' + coditions + ';')
+                ass = c.fetchall()
+                c.execute('SELECT DISTINCT * FROM ' + df[0] + ' WHERE ' + coditions + ';')
+                bad_tuples = [ t  for t in c.fetchall() ] if len(ass) > 1 else []
+
+                res[df] = bad_tuples
+
+        return res
+
     def check_df(self) -> dict:
         """Vérifie si les DF sont respectées"""
-        pass
+        return self._check_df_set(self.list_df())
 
-    def check_table_df(self, table: str) -> list:
+    def check_table_df(self, table: str) -> dict:
         """Vérifie si les DF sont respectées"""
 
         # La table doit exister
         if table not in self.tables:
             raise UnknowTableError()
 
-        # TODO
+        return self._check_df_set(self.list_table_df(table))
 
     def close(self):
         self._conn.commit()
