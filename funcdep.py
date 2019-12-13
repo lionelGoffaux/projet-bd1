@@ -68,13 +68,20 @@ class DB:
         if rhs not in self.get_fields(table):
             raise UnknowFieldsError()
 
+        # Le champ rhs ne doit pas être dans les champs lhs
+        if rhs in lhs.split():
+            raise RHSIncludeToLHSError()
+
         c = self._conn.cursor()
 
         # On crée la tables des DF si besoin
         if not self.has_df_table:
             utils.execute_sql_file(c, os.path.join('misc', 'init_df_table.sql'))
 
-        c.execute('INSERT INTO `FuncDep` VALUES (?, ?, ?)', (table, lhs, rhs))
+        try:
+            c.execute('INSERT INTO `FuncDep` VALUES (?, ?, ?)', (table, lhs, rhs))
+        except sqlite3.IntegrityError:
+            raise DFAddTwiceError()
 
     def del_df(self, table: str, lhs: str, rhs: str):
         df =  (table, lhs, rhs)
@@ -148,5 +155,12 @@ class DFNotSingularError(Exception):
     pass
 
 
+class DFAddTwiceError(Exception):
+    pass
+
+
 class DFTableError(Exception):
+    pass
+
+class RHSIncludeToLHSError(Exception):
     pass

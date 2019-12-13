@@ -57,6 +57,16 @@ class FuncDepTest(unittest.TestCase):
         self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_df())
         self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_table_df('TRIPS'))
 
+    def test_add_twice(self):
+        for df in self.db.list_df():
+            self.db.del_df(df[0], df[1], df[2])
+
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        
+        with self.assertRaises(funcdep.DFAddTwiceError):
+            self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+
+
     def test_unknow_table(self):
         with self.assertRaises(funcdep.UnknowTableError):
             self.db.add_df('RANDOM', 'Chassis', 'Mileage')
@@ -98,7 +108,9 @@ class FuncDepTest(unittest.TestCase):
         with self.assertRaises(funcdep.DFTableError):
             self.db.get_fields('FuncDep')
 
-    # TODO: check dans les df conclusion non inclue dans la prémisse
+    def test_rhs_not_include(self):
+        with self.assertRaises(funcdep.RHSIncludeToLHSError):
+            self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Date')
 
     # TODO: test ckeck df
 

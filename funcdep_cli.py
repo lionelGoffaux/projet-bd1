@@ -121,6 +121,8 @@ type help or ? to get help
             print('ERROR: DF not singular')
         except funcdep.DFTableError:
             print('ERROR: This table is de DF table')
+        except funcdep.DFAddTwiceError:
+            print('ERROR: DF already added')
 
     def do_DFdel(self, args):
         if not self.db:
