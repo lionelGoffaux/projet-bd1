@@ -121,6 +121,10 @@ class DB:
         c.execute('SELECT * FROM `FuncDep` WHERE `table` = ?', (table,))
         return c.fetchall()
 
+    def purge_df(self):
+        c = self._conn.cursor()
+        c.execute('DELETE FROM `FuncDep`')
+
     def check_df(self) -> dict:
         """Vérifie si les DF sont respectées"""
         pass

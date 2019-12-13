@@ -58,8 +58,7 @@ class FuncDepTest(unittest.TestCase):
         self.assertIn(('TRIPS', 'Date Driver Departure_Time', 'Destination'), self.db.list_table_df('TRIPS'))
 
     def test_add_twice(self):
-        for df in self.db.list_df():
-            self.db.del_df(df[0], df[1], df[2])
+        self.db.purge_df()
 
         self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
         
@@ -112,8 +111,12 @@ class FuncDepTest(unittest.TestCase):
         with self.assertRaises(funcdep.RHSIncludeToLHSError):
             self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Date')
 
-    # TODO: test ckeck df
+    def test_purge_df(self):
+        self.db.purge_df()
 
+        self.assertEqual(0, len(self.db.list_df()))
+
+    # TODO: test ckeck df
 
 if __name__ == '__main__':
     unittest.main()
