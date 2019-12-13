@@ -134,7 +134,8 @@ class DB:
             unique_lhs = c.execute('SELECT DISTINCT ' + df[1].replace(' ', ', ') + ' FROM ' + df[0] + ';') 
 
             for lhs in unique_lhs:
-                conditions = functools.reduce(lambda a, b : a + ' AND ' + b, ['{}={}'.format(f, v.__repr__()) for f, v in zip(df[1].split(), lhs)])
+                conditions_list = ['{}={}'.format(f, v.__repr__()) for f, v in zip(df[1].split(), lhs)]
+                conditions = functools.reduce(lambda a, b : a + ' AND ' + b, conditions_list)
 
                 c.execute('SELECT DISTINCT {} FROM {} WHERE {};'.format(df[2], df[0], conditions))
                 assos = c.fetchall()
