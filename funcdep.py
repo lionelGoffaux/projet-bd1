@@ -133,10 +133,10 @@ class DB:
         for df in dfs:
             unique_lhs = c.execute('SELECT DISTINCT ' + df[1].replace(' ', ', ') + ' FROM ' + df[0] + ';') 
             for lhs in unique_lhs:
-                coditions = functools.reduce(lambda a, b : a + ' AND ' + b, ['{}={} '.format(f, v.__repr__()) for f, v in zip(df[1].split(), lhs)])
-                c.execute('SELECT DISTINCT ' + df[2] + ' FROM ' + df[0] + ' WHERE ' + coditions + ';')
+                conditions = functools.reduce(lambda a, b : a + ' AND ' + b, ['{}={}'.format(f, v.__repr__()) for f, v in zip(df[1].split(), lhs)])
+                c.execute('SELECT DISTINCT ' + df[2] + ' FROM ' + df[0] + ' WHERE ' + conditions + ';')
                 ass = c.fetchall()
-                c.execute('SELECT DISTINCT * FROM ' + df[0] + ' WHERE ' + coditions + ';')
+                c.execute('SELECT DISTINCT * FROM ' + df[0] + ' WHERE ' + conditions + ';')
                 bad_tuples = [ t  for t in c.fetchall() ] if len(ass) > 1 else []
 
                 res[df] = bad_tuples
