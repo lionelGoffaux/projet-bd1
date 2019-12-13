@@ -13,3 +13,9 @@ def get_sql_statements(sql_file: str) -> list:
 def execute_sql_file(c: sqlite3.Cursor, sql_file: str) -> None:
     for s in get_sql_statements(sql_file):
         c.execute(s)
+
+def print_list(l: iter):
+    print()
+    for e in l:
+        print('- ' + str(e))
+    print()

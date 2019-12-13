@@ -1,7 +1,9 @@
 import argparse
 import cmd
+import functools
 
 import funcdep
+import utils
 
 
 class CmdParser(argparse.ArgumentParser):
@@ -13,7 +15,6 @@ class CmdParser(argparse.ArgumentParser):
         self.print_help()
         raise ArgumentError()
         
-
 
 class FuncDepCLI(cmd.Cmd):
     intro = """
@@ -50,11 +51,7 @@ type help or ? to get help
             print('ERROR: No DB connected')
             return
 
-        print()
-        for t in self.db.tables:
-            if t != 'FuncDep':
-                print('- ' + t)
-        print()
+        utils.print_list(self.db.tables)
 
     def do_fields(self, args):
         if not self.db:
@@ -75,12 +72,9 @@ type help or ? to get help
             print('ERROR: Tables not exists')
             return
 
-        print()
-        for f in fields:
-            print('- ' + f)
-        print()
+        utils.print_list(fields)
 
-    def do_listDF(self, args):
+    def do_DFlist(self, args):
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -99,10 +93,60 @@ type help or ? to get help
             print('ERROR: Tables not exists')
             return
 
-        print()
-        for df in dfs:
-            print('- ' + str(df))
-        print()
+        utils.print_list(dfs)
+
+    def do_DFadd(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        parser = CmdParser('DFadd')
+        parser.add_argument('table')
+        parser.add_argument('lhs', nargs='*')
+        parser.add_argument('rhs')
+        try:
+            args = parser.parse_args(args.split())
+        except ArgumentError:
+            return
+
+        lhs = functools.reduce(lambda a, b: a + ' ' + b, args.lhs)
+
+        try:
+            self.db.add_df(args.table, lhs, args.rhs)
+        except funcdep.UnknowTableError:
+            print('ERROR: Unknow table')
+        except funcdep.UnknowFieldsError:
+            print('ERROR: Unknow fields')
+        except funcdep.DFNotSingularError:
+            print('ERROR: DF not singular')
+        except funcdep.DFTableError:
+            print('ERROR: This table is de DF table')
+
+    def do_DFdel(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        parser = CmdParser('DFadd')
+        parser.add_argument('table')
+        parser.add_argument('lhs', nargs='*')
+        parser.add_argument('rhs')
+        try:
+            args = parser.parse_args(args.split())
+        except ArgumentError:
+            return
+
+        lhs = functools.reduce(lambda a, b: a + ' ' + b, args.lhs)       
+
+        try:
+            self.db.del_df(args.table, lhs, args.rhs)
+        except funcdep.UnknowTableError:
+            print('ERROR: Unknow table')
+        except funcdep.DFNotFoundError:
+            print('ERROR: DF not found')
+
+    def do_DFckeck(self, args):
+        pass 
 
     def do_exit(self, args):
         self.do_disconnect("")
