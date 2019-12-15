@@ -1,6 +1,7 @@
 import functools
 import os
 import sqlite3
+import copy
 
 import utils
 
@@ -158,6 +159,65 @@ class DB:
             raise UnknownTableError()
 
         return self._check_df_set(self.list_table_df(table))
+
+    def _is_include(self, sub: list,lset: list) -> bool:
+        for e in sub:
+            if e not in lset:
+                return False
+        
+        return True
+
+    def df_closure(self, atributes: str, dfs: list) -> list:
+        res = atributes.split()
+        res_has_changed = True
+        dfs = copy.deepcopy(dfs)
+        next_dfs = copy.deepcopy(dfs)
+
+        while res_has_changed:
+            res_has_changed = False
+            dfs = copy.deepcopy(next_dfs)
+
+            for df in dfs:
+
+                lhs = df[1].split()
+
+                if self._is_include(lhs, res):
+                    next_dfs.remove(df)
+                    if df[2] not in res: 
+                        res_has_changed = True
+                        res.append(df[2])
+
+        return res
+
+    def is_df_useless(self, check_df: tuple) -> bool:
+        dfs = self.list_df()
+
+        if check_df in dfs:
+            dfs.remove(check_df)
+
+        deter = self.df_closure(check_df[1], dfs)
+
+        return check_df[2] in deter
+
+    def find_useless_df(self) -> list:
+        res = []
+
+        for df in self.list_df():
+            if self.is_df_useless(df):
+                res.append(df)
+
+        return res
+
+    def clean_useless_df(self):
+        clean = 0 == len(self.find_useless_df())
+
+        while not clean:
+            clean = True
+            useless_dfs = self.find_useless_df()
+            if 0 < len(useless_dfs):
+                clean = False
+                df1 = useless_dfs[0]
+                self.del_df(df1[0], df1[1], df1[2])
 
     def close(self):
         self._conn.commit()

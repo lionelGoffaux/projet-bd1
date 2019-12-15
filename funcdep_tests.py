@@ -12,6 +12,8 @@ class FuncDepTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
+        cls.tearDownClass()
+
         init_db_sql = os.path.join('misc', 'init_test_db.sql')
 
         conn = sqlite3.connect(TEST_DB)
@@ -132,6 +134,59 @@ class FuncDepTest(unittest.TestCase):
         self.assertEqual(res, self.db.check_df())
         self.assertEqual(res_trips, self.db.check_table_df('TRIPS'))
         self.assertEqual(res_buses, self.db.check_table_df('BUSES'))
+
+    def test_df_closure(self):
+        self.db.purge_df()
+
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        self.db.add_df('TRIPS', 'Date Destination Departure_Time', 'Driver')
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Driver')
+
+        expected_result = ('Date', 'Number_Plate', 'Departure_Time','Driver', 'Destination')
+        result = self.db.df_closure('Date Number_Plate Departure_Time', self.db.list_df())
+
+        self.assertEqual(5, len(result))
+
+        for r in expected_result:
+            self.assertIn(r, result)
+
+    def test_detect_useless_df(self):
+        self.db.purge_df()
+
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        self.db.add_df('TRIPS', 'Date Destination Departure_Time', 'Driver')
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Driver')
+
+        self.assertTrue(self.db.is_df_useless(('TRIPS', 'Date Number_Plate Departure_Time', 'Destination')))
+
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Destination')
+        self.assertTrue(self.db.is_df_useless(('TRIPS', 'Date Number_Plate Departure_Time', 'Destination')))
+
+    def test_find_useless_df(self):
+        self.db.purge_df()
+
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        self.db.add_df('TRIPS', 'Date Destination Departure_Time', 'Driver')
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Driver')
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Destination')
+
+        expected_res = [('TRIPS', 'Date Number_Plate Departure_Time', 'Driver'), ('TRIPS', 'Date Number_Plate Departure_Time', 'Destination')]
+        res = self.db.find_useless_df()
+
+        self.assertEqual(expected_res, res)
+
+
+    def test_clean_useless_df(self):
+        self.db.purge_df()
+
+        self.db.add_df('TRIPS', 'Date Driver Departure_Time', 'Destination')
+        self.db.add_df('TRIPS', 'Date Destination Departure_Time', 'Driver')
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Driver')
+        self.db.add_df('TRIPS', 'Date Number_Plate Departure_Time', 'Destination')
+
+        self.db.clean_useless_df()
+
+        self.assertEqual(0, len(self.db.find_useless_df()))
 
 
 if __name__ == '__main__':
