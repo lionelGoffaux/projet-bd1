@@ -224,6 +224,73 @@ class DB:
         self._conn.close()
 
 
+
+
+
+    #Identification des superclés 2*n-1 possibilité pour n attributs          
+    def find_super_key(self, attributes : str, dfs: list) -> list:
+        res = attributes.split()  #Exemple :attributes = ["num dept name"] devient res = ["num","dept","name"]
+        tan = [[x] for x in res]  #Exemple :tan = [["num"],["dept"],["name"]]
+        fes=[]
+        #Toutes les combinaisons d'attributs entre eux (Pas de doublon) 
+        for b in tan:
+            for a in res:
+                if a not in b:
+                    sam = b.copy()
+                    sam.append(a)
+                    sam.sort()
+                    if sam not in tan:
+                        tan.append(sam)               #Exemple : attibuts=  "dept name lsit"  devient  [['dept'], ['dept', 'list'], ['dept', 'list', 'name'],
+                        tan.sort()                    #                                                   ['dept', 'name'], ['list'], ['list', 'name'], ['name']]
+
+        #Verification si la combinaison est une superclé avec la cloture
+        for n in tan:                                   #pour chaque combinaisons trouvées
+            stn= " ".join(n)                            #transformation ['dept', 'lsit'] en "dept lsit" pour la méthode df_closure
+            test =self.df_closure(stn,defs)
+            test.sort()                                 #Trie pour verifier voir si test = res
+            res.sort()                                  #Trie pour verifier voir si test = res
+            if test == res:                             #test de la cloture et l'ensemble des attributs 
+                fes[].append()                          
+        return fes                                       
+
+
+
+    #Partie Identification des clés candidates
+    def find_ckey(self, attributes : str, dfs: list) -> list:
+        final=[]
+        res = attributes.split()
+        m_len = len(res)                                #Prend comme meilleur taille de clés, la taille de tout les attributs
+        ckeys=self.find_super_key(attributes,dfs)       #Prend toute les super clé
+        for key in ckeys:
+            if len(key)< m_len:
+                final=[key]
+                m_len= len(key)
+            elif len(key)== m_len:
+                final.append(key)
+        return final                                    #Renvoye les clé qui ont la plus petite taille
+
+
+
+    #determiner si en BCNF
+    def is_bcnf(self,attributes, fds : list) -> bool:
+        key =self.find_super_key(attributes,dfs)
+        for fd in fds:
+            lhs = fd[1].split()
+            if lhs not in key
+                return False
+        return True
+    #determiner si en  3nf en verifiant une des 2 conditions
+    def is_3nf(self,attributes, fds : list) -> bool:
+        if self.is_bcnf(attributes,fds):                #si elle est en BCNF alors elle est ne 3NF
+            return True
+        key =self.find_ck(attributes,dfs)               #Verifcation si celui de droite appartient a une clé
+        for fd in fds:
+            rhs = fd[2]                                 #Partie de droite qui doit etre qu'un seul element max(regle)
+            if rhs in key
+                return True
+        return False
+
+
 class UnknownTableError(Exception):
     pass
 
