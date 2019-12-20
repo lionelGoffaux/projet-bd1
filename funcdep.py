@@ -229,8 +229,8 @@ class DB:
 
     #Identification des superclés 2*n-1 possibilité pour n attributs          
     def find_super_key(self, attributes : str, dfs: list) -> list:
-        res = attributes.split()  #Exemple :attributes = ["num dept name"] devient res = ["num","dept","name"]
-        tan = [[x] for x in res]  #Exemple :tan = [["num"],["dept"],["name"]]
+        res = attributes.split()  #Exemple :attributes = "num dept name" devient res = ["num","dept","name"]
+        tan = [[x] for x in res]  
         fes=[]
         #Toutes les combinaisons d'attributs entre eux (Pas de doublon) 
         for b in tan:
@@ -240,17 +240,17 @@ class DB:
                     sam.append(a)
                     sam.sort()
                     if sam not in tan:
-                        tan.append(sam)               #Exemple : attibuts=  "dept name lsit"  devient  [['dept'], ['dept', 'list'], ['dept', 'list', 'name'],
-                        tan.sort()                    #                                                   ['dept', 'name'], ['list'], ['list', 'name'], ['name']]
+                        tan.append(sam)               
+                        tan.sort()                                                                     
 
         #Verification si la combinaison est une superclé avec la cloture
-        for n in tan:                                   #pour chaque combinaisons trouvées
-            stn= " ".join(n)                            #transformation ['dept', 'lsit'] en "dept lsit" pour la méthode df_closure
-            test =self.df_closure(stn,defs)
-            test.sort()                                 #Trie pour verifier voir si test = res
-            res.sort()                                  #Trie pour verifier voir si test = res
-            if test == res:                             #test de la cloture et l'ensemble des attributs 
-                fes[].append()                          
+        for n in tan:                                   
+            stn= " ".join(n)                            
+            test =self.df_closure(stn,dfs)
+            test.sort()                                 
+            res.sort()                                  
+            if test == res and test not in fes:
+                fes.append(n)                       
         return fes                                       
 
 
@@ -259,35 +259,41 @@ class DB:
     def find_ckey(self, attributes : str, dfs: list) -> list:
         final=[]
         res = attributes.split()
-        m_len = len(res)                                #Prend comme meilleur taille de clés, la taille de tout les attributs
-        ckeys=self.find_super_key(attributes,dfs)       #Prend toute les super clé
+        m_len = len(res)
+        ckeys=self.find_super_key(attributes,dfs)
         for key in ckeys:
             if len(key)< m_len:
                 final=[key]
                 m_len= len(key)
             elif len(key)== m_len:
                 final.append(key)
-        return final                                    #Renvoye les clé qui ont la plus petite taille
+        return final                                    
 
 
 
     #determiner si en BCNF
-    def is_bcnf(self,attributes, fds : list) -> bool:
+    def is_bcnf(self,attributes, dfs : list) -> bool:
         key =self.find_super_key(attributes,dfs)
-        for fd in fds:
+        for fd in dfs:
             lhs = fd[1].split()
-            if lhs not in key
+            if lhs not in key:
                 return False
         return True
+    
+
     #determiner si en  3nf en verifiant une des 2 conditions
-    def is_3nf(self,attributes, fds : list) -> bool:
-        if self.is_bcnf(attributes,fds):                #si elle est en BCNF alors elle est ne 3NF
+    def is_3nf(self,attributes, dfs : list) -> bool:
+        #Si elle est en BCNF alors elle est ne 3NF
+        if self.is_bcnf(attributes,dfs):                
             return True
-        key =self.find_ck(attributes,dfs)               #Verifcation si celui de droite appartient a une clé
-        for fd in fds:
-            rhs = fd[2]                                 #Partie de droite qui doit etre qu'un seul element max(regle)
-            if rhs in key
-                return True
+        keys =self.find_ckey(attributes,dfs)             
+        
+        #Test 2eme condition
+        for fd in dfs:
+            rhs = fd[2]  
+            for key in keys:                              
+                if rhs in key:
+                  return True
         return False
 
 
