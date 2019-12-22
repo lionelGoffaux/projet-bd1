@@ -83,6 +83,9 @@ class FuncDepTest(unittest.TestCase):
         with self.assertRaises(funcdep.UnknownTableError):
             self.db.list_table_df('RANDOM')
 
+        with self.assertRaises(funcdep.UnknownTableError):
+            self.db.check_table_df('RANDOM')
+
     def test_unknown_fields(self):
         with self.assertRaises(funcdep.UnknownFieldsError):
             self.db.add_df('BUSES', 'Chassis', 'Random')
@@ -187,41 +190,43 @@ class FuncDepTest(unittest.TestCase):
         self.db.clean_useless_df()
 
         self.assertEqual(0, len(self.db.find_useless_df()))
+
     def test_find_super_key(self):
-    	self.db.purge_df()
-    	expected_res=[['Date'], ['Date', 'Departure_Time'], ['Date', 'Departure_Time', 'Destination'], ['Date', 'Departure_Time', 'Destination', 'Driver'], ['Date', 'Departure_Time', 'Destination', 'Driver', 'Number_Plate']]
-    	self.db.add_df('TRIPS', 'Date', 'Departure_Time')
-    	self.db.add_df('TRIPS', 'Date', 'Destination')
-    	self.db.add_df('TRIPS', 'Date', 'Number_Plate')
-    	self.db.add_df('TRIPS', 'Date', 'Driver')
-    	attributs = "Date Number_Plate Departure_Time Driver Destination"
-    	self.assertEqual(expected_res,self.db.find_super_key(attributs,self.db.list_df()))
+        self.db.purge_df()
+        expected_res=[['Date'], ['Date', 'Departure_Time'], ['Date', 'Departure_Time', 'Destination'], ['Date', 'Departure_Time', 'Destination', 'Driver'], ['Date', 'Departure_Time', 'Destination', 'Driver', 'Number_Plate']]
+        self.db.add_df('TRIPS', 'Date', 'Departure_Time')
+        self.db.add_df('TRIPS', 'Date', 'Destination')
+        self.db.add_df('TRIPS', 'Date', 'Number_Plate')
+        self.db.add_df('TRIPS', 'Date', 'Driver')
+        attributs = "Date Number_Plate Departure_Time Driver Destination"
+        self.assertEqual(expected_res,self.db.find_super_key(attributs,self.db.list_df()))
 
     def test_find_ckey(self):
-    	self.db.purge_df()
-    	expected_res=[['Date']]
-    	self.db.add_df('TRIPS', 'Date', 'Departure_Time')
-    	self.db.add_df('TRIPS', 'Date', 'Destination')
-    	self.db.add_df('TRIPS', 'Date', 'Number_Plate')
-    	self.db.add_df('TRIPS', 'Date', 'Driver')
-    	attributs = "Date Number_Plate Departure_Time Driver Destination"
-    	self.assertEqual(expected_res,self.db.find_ckey(attributs,self.db.list_df()))
+        self.db.purge_df()
+        expected_res=[['Date']]
+        self.db.add_df('TRIPS', 'Date', 'Departure_Time')
+        self.db.add_df('TRIPS', 'Date', 'Destination')
+        self.db.add_df('TRIPS', 'Date', 'Number_Plate')
+        self.db.add_df('TRIPS', 'Date', 'Driver')
+        self.db.add_df('TRIPS', 'Driver', 'Destination')
+        attributs = "Date Number_Plate Departure_Time Driver Destination"
+        self.assertEqual(expected_res,self.db.find_ckey(attributs,self.db.list_df()))
     
     def test_is_bcnf(self):
-    	self.db.purge_df()
-    	attributs = "Date Number_Plate Departure_Time Driver Destination"
-    	self.db.add_df('TRIPS', 'Date', 'Departure_Time')
-    	self.db.add_df('TRIPS', 'Date', 'Destination')
-    	self.db.add_df('TRIPS', 'Date', 'Number_Plate')
-    	self.db.add_df('TRIPS', 'Date', 'Driver')
-    	self.assertTrue(self.db.is_bcnf(attributs,self.db.list_df()))
+        self.db.purge_df()
+        attributs = "Date Number_Plate Departure_Time Driver Destination"
+        self.db.add_df('TRIPS', 'Date', 'Departure_Time')
+        self.db.add_df('TRIPS', 'Date', 'Destination')
+        self.db.add_df('TRIPS', 'Date', 'Number_Plate')
+        self.db.add_df('TRIPS', 'Date', 'Driver')
+        self.assertTrue(self.db.is_bcnf(attributs,self.db.list_df()))
 
     def test_is_3nf(self):
-    	self.db.purge_df()
-    	attributs = "Date Number_Plate Departure_Time"
-    	self.db.add_df('TRIPS', 'Date Number_Plate', 'Departure_Time')
-    	self.db.add_df('TRIPS', 'Departure_Time', 'Number_Plate')
-    	self.assertTrue(self.db.is_3nf(attributs,self.db.list_df()))
+        self.db.purge_df()
+        attributs = "Date Number_Plate Departure_Time"
+        self.db.add_df('TRIPS', 'Date Number_Plate', 'Departure_Time')
+        self.db.add_df('TRIPS', 'Departure_Time', 'Number_Plate')
+        self.assertTrue(self.db.is_3nf(attributs,self.db.list_df()))
 
 if __name__ == '__main__':
     unittest.main()

@@ -167,7 +167,7 @@ class DB:
         
         return True
 
-    def df_closure(self, atributes: str, dfs: list) -> list:
+    def df_closure(self, atributes: str, dfs: list) -> list: # TODO:attribut rename
         res = atributes.split()
         res_has_changed = True
         dfs = copy.deepcopy(dfs)
@@ -219,16 +219,32 @@ class DB:
                 df1 = useless_dfs[0]
                 self.del_df(df1[0], df1[1], df1[2])
 
+    def clean_inconsistent_df(self):
+        dfs = self.list_df()
+
+        for df in dfs:
+            if df[0] not in self.tables:
+                self.del_df(df[0], df[1], df[2])
+
+            inconsistent = False
+
+            for att in df[1].split()+[df[2]]:
+                if att not in  self.get_fields(df[0]):
+                    inconsistent  = True
+
+            if inconsistent:
+                self.del_df(df[0], df[1], df[2])
+
+    def clean(self):
+        self.clean_inconsistent_df()
+        self.clean_useless_df()
+
     def close(self):
         self._conn.commit()
         self._conn.close()
 
-
-
-
-
     #Identification des superclés 2*n-1 possibilité pour n attributs          
-    def find_super_key(self, attributes : str, dfs: list) -> list:
+    def find_super_key(self, attributes: str, dfs: list) -> list:
         res = attributes.split()  #Exemple :attributes = "num dept name" devient res = ["num","dept","name"]
         tan = [[x] for x in res]  
         fes=[]
@@ -256,7 +272,7 @@ class DB:
 
 
     #Partie Identification des clés candidates
-    def find_ckey(self, attributes : str, dfs: list) -> list:
+    def find_ckey(self, attributes: str, dfs: list) -> list:
         final=[]
         res = attributes.split()
         m_len = len(res)
@@ -272,7 +288,7 @@ class DB:
 
 
     #determiner si en BCNF
-    def is_bcnf(self,attributes, dfs : list) -> bool:
+    def is_bcnf(self,attributes: str, dfs: list) -> bool:
         key =self.find_super_key(attributes,dfs)
         for fd in dfs:
             lhs = fd[1].split()
@@ -282,7 +298,7 @@ class DB:
     
 
     #determiner si en  3nf en verifiant une des 2 conditions
-    def is_3nf(self,attributes, dfs : list) -> bool:
+    def is_3nf(self,attributes, dfs: list) -> bool:
         #Si elle est en BCNF alors elle est ne 3NF
         if self.is_bcnf(attributes,dfs):                
             return True

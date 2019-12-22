@@ -80,7 +80,7 @@ type help or ? to get help
             return
 
         try:
-            parser = CmdParser('listDF')
+            parser = CmdParser('list')
             parser.add_argument('table', nargs='?')
             args = parser.parse_args(args.split())
         except ArgumentError:
@@ -90,7 +90,7 @@ type help or ? to get help
         try:
             dfs = self.db.list_table_df(args.table) if args.table else self.db.list_df()
         except funcdep.UnknownTableError:
-            print('ERROR: Tables not exists')
+            print('ERROR: Table not exists')
             return
 
         utils.print_list(dfs)
@@ -100,7 +100,7 @@ type help or ? to get help
             print('ERROR: No DB connected')
             return
 
-        parser = CmdParser('DFadd')
+        parser = CmdParser('add')
         parser.add_argument('table')
         parser.add_argument('lhs', nargs='*')
         parser.add_argument('rhs')
@@ -129,7 +129,7 @@ type help or ? to get help
             print('ERROR: No DB connected')
             return
 
-        parser = CmdParser('DFadd')
+        parser = CmdParser('del')
         parser.add_argument('table')
         parser.add_argument('lhs', nargs='*')
         parser.add_argument('rhs')
@@ -147,8 +147,73 @@ type help or ? to get help
         except funcdep.DFNotFoundError:
             print('ERROR: DF not found')
 
-    def do_ckeck(self, args):
-        pass 
+    def do_check(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        try:
+            parser = CmdParser('ckeck')
+            parser.add_argument('table', nargs='?')
+            args = parser.parse_args(args.split())
+        except ArgumentError:
+            return
+
+        res = None
+
+        try:
+            res = self.db.check_table_df(args.table) if args.table else self.db.check_df()
+        except funcdep.UnknownTableError:
+            print('ERROR: Table not exists')
+            return
+
+        for df in res:
+            print(df, end='')
+            bad_tuples = res[df]
+
+            if len(bad_tuples) == 0:
+                print(' ok ')
+            else:
+                print('\nThis DF is not respected')
+                for t in bad_tuples:
+                    print('\t- ', t)
+
+    def do_clean(self, args):
+        self.db.clean()
+
+    def do_purge(self, args):
+        self.db.purge_df()
+
+    def do_closure(self, args):
+        parser = CmdParser('closure')
+        parser.add_argument('attributes', nargs='*')
+        try:
+            args = parser.parse_args(args.split())
+        except ArgumentError:
+            return
+
+        att = functools.reduce(lambda a, b: str(a) +  ' ' + str(b), args.attributes)
+        closure = self.db.df_closure(att, self.db.list_df())
+
+        utils.print_list(closure)
+
+    def do_key(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        try:
+            parser = CmdParser('key')
+            parser.add_argument('table')
+            args = parser.parse_args(args.split())
+        except ArgumentError:
+            return
+
+        att = functools.reduce(lambda a, b: str(a)+' '+str(b), self.db.get_fields(args.table))
+
+        keys = self.db.find_ckey(att, self.db.list_table_df(args.table))
+
+        utils.print_list(keys)
 
     def do_exit(self, args):
         self.do_disconnect("")
