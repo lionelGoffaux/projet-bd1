@@ -209,11 +209,65 @@ type help or ? to get help
         except ArgumentError:
             return
 
-        att = functools.reduce(lambda a, b: str(a)+' '+str(b), self.db.get_fields(args.table))
-
-        keys = self.db.find_ckey(att, self.db.list_table_df(args.table))
+        keys = self.db.key(args.table)
 
         utils.print_list(keys)
+
+    def do_super_key(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        try:
+            parser = CmdParser('key')
+            parser.add_argument('table')
+            args = parser.parse_args(args.split())
+        except ArgumentError:
+            return
+
+        keys = self.db.super_key(args.table)
+
+        utils.print_list(keys)
+
+    def do_3nf(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        res = self.db.is_3nf()
+
+        for table in res:
+            print(table, end='')
+            if len(res[table]) == 0:
+                print(' ok')
+            else:
+                print('\nThis table is not in 3NF')
+                for df in res[table]:
+                    print('\t- ', df)
+
+    def do_bcnf(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        res = self.db.is_bcnf()
+
+        for table in res:
+            print(table, end='')
+            if len(res[table]) == 0:
+                print(' ok')
+            else:
+                print('\nThis table is not in BCNF')
+                for df in res[table]:
+                    print('\t- ', df)
+
+
+    def do_normalize(self, args):
+        if not self.db:
+            print('ERROR: No DB connected')
+            return
+
+        self.db.normalize()
 
     def do_exit(self, args):
         self.do_disconnect("")

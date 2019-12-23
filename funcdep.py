@@ -239,78 +239,175 @@ class DB:
         self.clean_inconsistent_df()
         self.clean_useless_df()
 
+    def is_key(self, table: str, attributes: str) -> bool:
+        all_att = self.get_fields(table)
+        closure = self.df_closure(attributes, self.list_table_df(table))
+
+        return self._is_include(all_att, closure)
+
+    def super_key(self, table: str) -> list:
+        # TODO: chack table
+        att = self.get_fields(table)
+        return [sub for sub in utils.get_all_subset(att) if self.is_key(table, utils.list2str(sub))]
+
+    def key(self, table: str) -> list:
+        # TODO: chack table
+        super_key = self.super_key(table)
+        res = []
+
+        for sk in super_key:
+            super_copy = copy.deepcopy(super_key)
+            super_copy.remove(sk)
+            is_key = True
+
+            for k in super_copy:
+                if self._is_include(k, sk):
+                    is_key = False
+
+            if is_key:
+                res.append(sk)
+
+        return res
+
+    def is_bcnf_table(self, table: str) -> list:
+        # TODO: chack table
+        # TODO: clean
+        res = []
+
+        for df in self.list_table_df(table):
+            if not self.is_key(table, df[1]):
+                res.append(df)
+
+        return res
+
+    def is_bcnf(self) -> dict:
+        # TODO: clean
+        res = {}
+
+        for t in self.tables:
+            res[t] = self.is_bcnf_table(t)
+
+        return res
+
+    def is_3nf_table(self, table: str) -> list:
+        # TODO: chack table
+        # TODO: clean
+        
+        bcnf = self.is_bcnf_table(table)
+        res = []
+
+        for df in bcnf:
+            ok = False
+            for sk in  self.key(table):
+                if df[2] in sk:
+                    ok = True 
+            
+            if not ok:
+                res.append(df)
+
+        return res
+
+    def is_3nf(self) -> dict:
+        # TODO: clean
+        res = {}
+
+        for t in self.tables:
+            res[t] = self.is_3nf_table(t)
+
+        return res
+
+    def find_fields(self, names: list, description: list) -> list:
+        res = []
+
+        for name in names:
+            for d in description:
+                if d[1] == name:
+                    res.append(d)
+                    break
+        
+        return res
+
+    def get_content(self, att: list, table: str) -> list:
+        para = functools.reduce(lambda a,   b: a+', '+b, att)
+        c = self._conn.cursor()
+        c.execute('SELECT DISTINCT ' + para  + ' FROM ' + table +  ';')
+        return c.fetchall()
+
+    def normalize_table(self, table: str):
+        new_tables = []
+        dfs = self.list_table_df(table)
+        c = self._conn.cursor()
+        c.execute('PRAGMA table_info(' + table + ')')
+
+        fields_description = c.fetchall()
+
+        for df in self.is_3nf_table(table):
+            field2rm = self.find_fields([df[2]], fields_description)[0]
+            new_fields = self.find_fields(df[1].split()+[df[2]], fields_description)
+            fields_description.remove(field2rm)
+   
+            content = self.get_content(df[1].split()+[df[2]], table)
+
+            dfs.remove(df)
+            new_tables.append((new_fields, content, [df]))
+
+        content = self.get_content([f[1] for f in fields_description], table)
+        new_tables.append((fields_description, content, dfs))
+
+        return new_tables
+
+    def add_content(self, c, nt, n, table):
+        request = 'INSERT INTO `{}` VALUES ('.format(table+'_'+str(n))
+        insert = ['?' for n in range(len(nt[0]))]
+        request += functools.reduce(lambda a, b: a+', '+b, insert) if len(insert) > 1 else insert[0]
+        request += ');'
+
+        if len(nt[1]) >= 1:
+            c.executemany(request, nt[1])
+
+    def create_new_table(self, c, nt, n, table):
+        request = "CREATE TABLE IF NOT EXISTS `{}`(".format(table+'_'+str(n))
+        fields = []
+
+        for field in nt[0]:
+            freq ="`{}` {}".format(field[1], field[2])
+            fields.append(freq)
+        
+        request += functools.reduce(lambda a, b: a+','+b, fields) if len(fields) > 1 else fields[0]
+        request += ');'
+
+        c.execute(request)
+
+    def add_new_df(self, c, nt, n, table):
+        new_df = [(table+'_'+str(n), df[1], df[2]) for df in nt[2]]
+        if len(new_df) > 0:
+            c.executemany('INSERT INTO `FuncDep` VALUES (?, ?, ?);', new_df)
+
+    def normalize(self):
+        # TODO: ckeck
+        conn = sqlite3.connect('normalize.sqlite')
+        c = conn.cursor()
+
+        utils.execute_sql_file(c, os.path.join('misc', 'init_df_table.sql'))
+        tables = self.tables
+
+        if 'FuncDep' in tables:
+            tables.remove('FuncDep')
+        
+        for table in tables:
+            decom = self.normalize_table(table)
+
+            for n, nt in enumerate(decom):
+                self.create_new_table(c, nt, n, table)
+                self.add_content(c, nt,  n, table)
+                self.add_new_df(c, nt, n, table)
+
+        conn.commit()
+        conn.close()
+                
     def close(self):
         self._conn.commit()
         self._conn.close()
-
-    #Identification des superclés 2*n-1 possibilité pour n attributs          
-    def find_super_key(self, attributes: str, dfs: list) -> list:
-        res = attributes.split()  #Exemple :attributes = "num dept name" devient res = ["num","dept","name"]
-        tan = [[x] for x in res]  
-        fes=[]
-        #Toutes les combinaisons d'attributs entre eux (Pas de doublon) 
-        for b in tan:
-            for a in res:
-                if a not in b:
-                    sam = b.copy()
-                    sam.append(a)
-                    sam.sort()
-                    if sam not in tan:
-                        tan.append(sam)               
-                        tan.sort()                                                                     
-
-        #Verification si la combinaison est une superclé avec la cloture
-        for n in tan:                                   
-            stn= " ".join(n)                            
-            test =self.df_closure(stn,dfs)
-            test.sort()                                 
-            res.sort()                                  
-            if test == res and test not in fes:
-                fes.append(n)                       
-        return fes                                       
-
-
-
-    #Partie Identification des clés candidates
-    def find_ckey(self, attributes: str, dfs: list) -> list:
-        final=[]
-        res = attributes.split()
-        m_len = len(res)
-        ckeys=self.find_super_key(attributes,dfs)
-        for key in ckeys:
-            if len(key)< m_len:
-                final=[key]
-                m_len= len(key)
-            elif len(key)== m_len:
-                final.append(key)
-        return final                                    
-
-
-
-    #determiner si en BCNF
-    def is_bcnf(self,attributes: str, dfs: list) -> bool:
-        key =self.find_super_key(attributes,dfs)
-        for fd in dfs:
-            lhs = fd[1].split()
-            if lhs not in key:
-                return False
-        return True
-    
-
-    #determiner si en  3nf en verifiant une des 2 conditions
-    def is_3nf(self,attributes, dfs: list) -> bool:
-        #Si elle est en BCNF alors elle est ne 3NF
-        if self.is_bcnf(attributes,dfs):                
-            return True
-        keys =self.find_ckey(attributes,dfs)             
-        
-        #Test 2eme condition
-        for fd in dfs:
-            rhs = fd[2]  
-            for key in keys:                              
-                if rhs in key:
-                  return True
-        return False
 
 
 class UnknownTableError(Exception):
