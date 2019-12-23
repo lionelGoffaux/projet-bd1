@@ -106,10 +106,13 @@ type help or ? to get help
         parser.add_argument('rhs')
         try:
             args = parser.parse_args(args.split())
+            if args.lhs is None or len(args.lhs) == 0:
+                parser.print_help()
+                return
         except ArgumentError:
             return
 
-        lhs = functools.reduce(lambda a, b: a + ' ' + b, args.lhs)
+        lhs = functools.reduce(lambda a, b: a + ' ' + b, args.lhs) if len(args.lhs) > 1 else args.lhs[0]
 
         try:
             self.db.add_df(args.table, lhs, args.rhs)
@@ -189,10 +192,13 @@ type help or ? to get help
         parser.add_argument('attributes', nargs='*')
         try:
             args = parser.parse_args(args.split())
+            if args.attributes is None or len(args.attributes) == 0:
+                parser.print_help()
+                return
         except ArgumentError:
             return
 
-        att = functools.reduce(lambda a, b: str(a) +  ' ' + str(b), args.attributes)
+        att = functools.reduce(lambda a, b: str(a) + ' ' + str(b), args.attributes)
         closure = self.db.df_closure(att, self.db.list_df())
 
         utils.print_list(closure)
@@ -209,7 +215,11 @@ type help or ? to get help
         except ArgumentError:
             return
 
-        keys = self.db.key(args.table)
+        try:
+            keys = self.db.key(args.table)
+        except funcdep.UnknownTableError:
+            print('ERROR: Table not exists')
+            return
 
         utils.print_list(keys)
 
@@ -225,7 +235,11 @@ type help or ? to get help
         except ArgumentError:
             return
 
-        keys = self.db.super_key(args.table)
+        try:
+            keys = self.db.super_key(args.table)
+        except funcdep.UnknownTableError:
+            print('ERROR: Table not exists')
+            return
 
         utils.print_list(keys)
 
@@ -260,7 +274,6 @@ type help or ? to get help
                 print('\nThis table is not in BCNF')
                 for df in res[table]:
                     print('\t- ', df)
-
 
     def do_normalize(self, args):
         if not self.db:

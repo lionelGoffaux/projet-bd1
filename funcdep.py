@@ -43,7 +43,7 @@ class DB:
             raise DFTableError()
 
         c = self._conn.cursor()
-        c.execute('PRAGMA table_info(' + table + ')')  # TODO: use prepare request 
+        c.execute('PRAGMA table_info(' + table + ')')
         return [t[1] for t in c.fetchall()]
 
     def add_df(self, table: str, lhs: str, rhs: str):
@@ -160,15 +160,15 @@ class DB:
 
         return self._check_df_set(self.list_table_df(table))
 
-    def _is_include(self, sub: list,lset: list) -> bool:
+    def _is_include(self, sub: list, lset: list) -> bool:
         for e in sub:
             if e not in lset:
                 return False
         
         return True
 
-    def df_closure(self, atributes: str, dfs: list) -> list: # TODO:attribut rename
-        res = atributes.split()
+    def df_closure(self, attributes: str, dfs: list) -> list:
+        res = attributes.split()
         res_has_changed = True
         dfs = copy.deepcopy(dfs)
         next_dfs = copy.deepcopy(dfs)
@@ -229,8 +229,8 @@ class DB:
             inconsistent = False
 
             for att in df[1].split()+[df[2]]:
-                if att not in  self.get_fields(df[0]):
-                    inconsistent  = True
+                if att not in self.get_fields(df[0]):
+                    inconsistent = True
 
             if inconsistent:
                 self.del_df(df[0], df[1], df[2])
@@ -246,12 +246,18 @@ class DB:
         return self._is_include(all_att, closure)
 
     def super_key(self, table: str) -> list:
-        # TODO: chack table
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknownTableError()
+
         att = self.get_fields(table)
         return [sub for sub in utils.get_all_subset(att) if self.is_key(table, utils.list2str(sub))]
 
     def key(self, table: str) -> list:
-        # TODO: chack table
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknownTableError()
+
         super_key = self.super_key(table)
         res = []
 
@@ -270,8 +276,10 @@ class DB:
         return res
 
     def is_bcnf_table(self, table: str) -> list:
-        # TODO: chack table
-        # TODO: clean
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknownTableError()
+
         res = []
 
         for df in self.list_table_df(table):
@@ -281,7 +289,6 @@ class DB:
         return res
 
     def is_bcnf(self) -> dict:
-        # TODO: clean
         res = {}
 
         for t in self.tables:
@@ -290,8 +297,9 @@ class DB:
         return res
 
     def is_3nf_table(self, table: str) -> list:
-        # TODO: chack table
-        # TODO: clean
+        # La table doit exister
+        if table not in self.tables:
+            raise UnknownTableError()
         
         bcnf = self.is_bcnf_table(table)
         res = []
@@ -308,7 +316,6 @@ class DB:
         return res
 
     def is_3nf(self) -> dict:
-        # TODO: clean
         res = {}
 
         for t in self.tables:
@@ -384,7 +391,6 @@ class DB:
             c.executemany('INSERT INTO `FuncDep` VALUES (?, ?, ?);', new_df)
 
     def normalize(self):
-        # TODO: ckeck
         conn = sqlite3.connect('normalize.sqlite')
         c = conn.cursor()
 
