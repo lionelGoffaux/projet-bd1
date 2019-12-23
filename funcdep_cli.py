@@ -26,6 +26,7 @@ type help or ? to get help
     db = None
 
     def do_connect(self, args):
+        """Connecte l'application au fichier sqlite demandé"""
         if self.db:
             print('ERROR: Already connected')
             return
@@ -41,12 +42,14 @@ type help or ? to get help
         self.prompt = '({}) '.format(args.db_name) + self.prompt
 
     def do_disconnect(self, args):
+        """Déconnecte de la base de données actuelle"""
         if self.db:
             self.db.close()
             self.db = None
             self.prompt = '>> '
 
     def do_tables(self, args):
+        """Liste les tables de las base de données"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -54,6 +57,7 @@ type help or ? to get help
         utils.print_list(self.db.tables)
 
     def do_fields(self, args):
+        """Liste les champs d'une table de la base de données"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -75,6 +79,7 @@ type help or ? to get help
         utils.print_list(fields)
 
     def do_list(self, args):
+        """Liste les DF pour la base de données ou une table"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -96,6 +101,7 @@ type help or ? to get help
         utils.print_list(dfs)
 
     def do_add(self, args):
+        """Ajoute une DF à la base de données"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -128,6 +134,7 @@ type help or ? to get help
             print('ERROR: DF already added')
 
     def do_del(self, args):
+        """Supprime une DF de la base de données"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -151,6 +158,7 @@ type help or ? to get help
             print('ERROR: DF not found')
 
     def do_check(self, args):
+        """Vérifie si les DF de la base ou d'une table sont vérifiées"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -182,12 +190,15 @@ type help or ? to get help
                     print('\t- ', t)
 
     def do_clean(self, args):
+        """Supprime les DF inutiles"""
         self.db.clean()
 
     def do_purge(self, args):
+        """Supprime toutes les DF de la base"""
         self.db.purge_df()
 
     def do_closure(self, args):
+        """Calcule la fermeture d'une liste d'attributs"""
         parser = CmdParser('closure')
         parser.add_argument('attributes', nargs='*')
         try:
@@ -204,6 +215,7 @@ type help or ? to get help
         utils.print_list(closure)
 
     def do_key(self, args):
+        """Liste les clefs d'une table"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -224,6 +236,7 @@ type help or ? to get help
         utils.print_list(keys)
 
     def do_super_key(self, args):
+        """liste les super clefs d'une table"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -244,6 +257,7 @@ type help or ? to get help
         utils.print_list(keys)
 
     def do_3nf(self, args):
+        """Verifie si les tables sont en 3NF"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -260,6 +274,7 @@ type help or ? to get help
                     print('\t- ', df)
 
     def do_bcnf(self, args):
+        """Vérifie si les tables sont en BCNF"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -276,6 +291,7 @@ type help or ? to get help
                     print('\t- ', df)
 
     def do_normalize(self, args):
+        """Crée une autre basse de données(normalize.sqlite) normalisée"""
         if not self.db:
             print('ERROR: No DB connected')
             return
@@ -283,6 +299,7 @@ type help or ? to get help
         self.db.normalize()
 
     def do_exit(self, args):
+        """Quite l'application"""
         self.do_disconnect("")
         print('bye')
         return True
